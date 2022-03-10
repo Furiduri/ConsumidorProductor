@@ -13,7 +13,7 @@ import procon.vista.MainFrame;
 
 /**
  *
- * @author furid
+ * @author Jorge Perez
  */
 public class MainClass {
 
@@ -29,7 +29,7 @@ public class MainClass {
             @Override
             public void run() {
                 cMain._Frame = new MainFrame();
-                cMain._Frame.setVisible(true);
+                cMain._Frame.setVisible(true);                
             }
         });
     }

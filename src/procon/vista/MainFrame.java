@@ -5,43 +5,103 @@
  */
 package procon.vista;
 
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.util.ArrayList;
 import javax.swing.JLabel;
+import procon.Productor;
+import java.util.List;
+import procon.Consumidor;
+import procon.Inventario;
+import procon.Log;
 
 /**
  *
- * @author furid
+ * @author Jorge Perez
  */
 public class MainFrame extends javax.swing.JFrame {
-
+    
+    private List<Productor> _ListProductores = null;
+    private List<Consumidor> _ListConsumidor = null;
+    private Inventario _Inventario = null;
+    private Boolean _IsActive = false;
     /**
      * Creates new form MainFrame
      */
     public MainFrame() {
         initComponents();
         this.setTitle("El Productor y el Consumidor");
-        lblTitle.setText(getTitle());
-    }
+        lblTitle.setText(getTitle());               
+        _Inventario = new Inventario(10, pnlContentAlmacen);
+        _ListProductores = new ArrayList<Productor>();
+        _ListConsumidor = new ArrayList<Consumidor>();
+        this.AddProductor();
+    }    
     
-    
-    protected void AddLabels(javax.swing.JPanel panel, int cant){
+    public Productor AddProductor(){        
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.anchor = GridBagConstraints.WEST;
         constraints.insets = new Insets(5, 5, 5, 5);
-        int x = 0, y = 0;        
-        for (int i = 1; i <= cant; i++) {
-            constraints.gridx = x;
-            constraints.gridy = y;  
-            javax.swing.JLabel lbl = new JLabel(String.valueOf(i));            
-            panel.add(lbl, constraints);            
-            if((i%10)==0){
-                x=0;
-                y++;
-            }else x++;
+        constraints.gridx = _ListProductores.size()%4;
+        constraints.gridy = (int)(_ListProductores.size()/4);  
+        Productor pr = new Productor(_ListProductores.size(), _Inventario);            
+        _ListProductores.add(pr);            
+        lblMaxProductor.setText(String.valueOf(_ListProductores.size()));
+        this.pnlContentProductor.add(pr.getLbl(), constraints);  
+        if(_IsActive)
+            pr.start();
+        
+        Log.send("AddProductor");
+        return pr;
+    }
+    
+    public void RemoveProductor(){
+        if(!_ListProductores.isEmpty()){
+            Productor pr = _ListProductores.remove(_ListProductores.size()-1);            
+            pnlContentProductor.remove(pr.getLbl());
+            pnlContentProductor.revalidate();
+            pnlContentProductor.repaint();
+            if(_IsActive){
+                pr.stop();                
+            }
+            pr = null;
+            lblMaxProductor.setText(String.valueOf(_ListProductores.size()));
         }
+        Log.send("RemoveProductor");
+    }
+    
+    public Consumidor AddConsumidor(){        
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.WEST;
+        constraints.insets = new Insets(5, 5, 5, 5);
+        constraints.gridx = _ListConsumidor.size()%4;
+        constraints.gridy = (int)(_ListConsumidor.size()/4);  
+        Consumidor cs = new Consumidor(_ListConsumidor.size());            
+        _ListConsumidor.add(cs);            
+        lblMaxConsumidor.setText(String.valueOf(_ListConsumidor.size()));
+        this.pnlContentConsumidor.add(cs.getLbl(), constraints);  
+        if(_IsActive)
+            cs.start();
+        Log.send("AddConsumidor");
+        return cs;
     }
 
+    
+    public void RemoveConsumidor(){
+        if(!_ListConsumidor.isEmpty()){
+            Consumidor cs = _ListConsumidor.remove(_ListConsumidor.size()-1);            
+            pnlContentConsumidor.remove(cs.getLbl());
+            pnlContentConsumidor.revalidate();
+            pnlContentConsumidor.repaint();
+            if(_IsActive){
+                cs.stop();                
+            }
+            cs = null;
+            lblMaxConsumidor.setText(String.valueOf(_ListConsumidor.size()));
+        }
+        Log.send("RemoveConsumidor");
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -58,14 +118,23 @@ public class MainFrame extends javax.swing.JFrame {
         lblTitleAlmacen = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlContentAlmacen = new javax.swing.JPanel();
+        lblMaxAlmacen = new javax.swing.JLabel();
+        btnMaxAlmacen = new javax.swing.JButton();
+        btnMinAlmacen = new javax.swing.JButton();
         pnlConsumidor = new javax.swing.JPanel();
         lblTitleConsumidor = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlContentConsumidor = new javax.swing.JPanel();
+        btnMaxConsumidor = new javax.swing.JButton();
+        lblMaxConsumidor = new javax.swing.JLabel();
+        btnMinConsumidor = new javax.swing.JButton();
         pnlProductor = new javax.swing.JPanel();
         lblTitleProductor = new javax.swing.JLabel();
         pnlScrollContentProductor = new javax.swing.JScrollPane();
         pnlContentProductor = new javax.swing.JPanel();
+        btnMaxProductor = new javax.swing.JButton();
+        lblMaxProductor = new javax.swing.JLabel();
+        btnMinProductor = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(51, 51, 51));
@@ -83,6 +152,11 @@ public class MainFrame extends javax.swing.JFrame {
 
         btnStart.setFont(new java.awt.Font("Arial", 1, 18)); // NOI18N
         btnStart.setText("Iniciar");
+        btnStart.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnStartMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout pnlHeaderLayout = new javax.swing.GroupLayout(pnlHeader);
         pnlHeader.setLayout(pnlHeaderLayout);
@@ -121,6 +195,22 @@ public class MainFrame extends javax.swing.JFrame {
         pnlContentAlmacen.setLayout(new java.awt.GridBagLayout());
         jScrollPane1.setViewportView(pnlContentAlmacen);
 
+        lblMaxAlmacen.setFont(new java.awt.Font("Arial Black", 1, 18)); // NOI18N
+        lblMaxAlmacen.setForeground(new java.awt.Color(255, 255, 255));
+        lblMaxAlmacen.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblMaxAlmacen.setText("10");
+
+        btnMaxAlmacen.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnMaxAlmacen.setText("+");
+        btnMaxAlmacen.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnMaxAlmacenMouseClicked(evt);
+            }
+        });
+
+        btnMinAlmacen.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnMinAlmacen.setText("-");
+
         javax.swing.GroupLayout pnlAlmacenLayout = new javax.swing.GroupLayout(pnlAlmacen);
         pnlAlmacen.setLayout(pnlAlmacenLayout);
         pnlAlmacenLayout.setHorizontalGroup(
@@ -128,9 +218,18 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(pnlAlmacenLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnlAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblTitleAlmacen, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(10, Short.MAX_VALUE))
+                    .addGroup(pnlAlmacenLayout.createSequentialGroup()
+                        .addGroup(pnlAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblTitleAlmacen, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(pnlAlmacenLayout.createSequentialGroup()
+                        .addComponent(btnMaxAlmacen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblMaxAlmacen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnMinAlmacen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         pnlAlmacenLayout.setVerticalGroup(
             pnlAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -139,7 +238,12 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(lblTitleAlmacen)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(291, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(pnlAlmacenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblMaxAlmacen)
+                    .addComponent(btnMaxAlmacen)
+                    .addComponent(btnMinAlmacen))
+                .addContainerGap(238, Short.MAX_VALUE))
         );
 
         pnlConsumidor.setBackground(new java.awt.Color(51, 51, 51));
@@ -158,6 +262,27 @@ public class MainFrame extends javax.swing.JFrame {
         pnlContentConsumidor.setLayout(new java.awt.GridBagLayout());
         jScrollPane2.setViewportView(pnlContentConsumidor);
 
+        btnMaxConsumidor.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnMaxConsumidor.setText("+");
+        btnMaxConsumidor.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnMaxConsumidorMouseClicked(evt);
+            }
+        });
+
+        lblMaxConsumidor.setFont(new java.awt.Font("Arial Black", 1, 18)); // NOI18N
+        lblMaxConsumidor.setForeground(new java.awt.Color(255, 255, 255));
+        lblMaxConsumidor.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblMaxConsumidor.setText("10");
+
+        btnMinConsumidor.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnMinConsumidor.setText("-");
+        btnMinConsumidor.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnMinConsumidorMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlConsumidorLayout = new javax.swing.GroupLayout(pnlConsumidor);
         pnlConsumidor.setLayout(pnlConsumidorLayout);
         pnlConsumidorLayout.setHorizontalGroup(
@@ -165,9 +290,18 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(pnlConsumidorLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnlConsumidorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblTitleConsumidor, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(15, Short.MAX_VALUE))
+                    .addGroup(pnlConsumidorLayout.createSequentialGroup()
+                        .addGroup(pnlConsumidorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblTitleConsumidor, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 11, Short.MAX_VALUE))
+                    .addGroup(pnlConsumidorLayout.createSequentialGroup()
+                        .addComponent(btnMaxConsumidor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblMaxConsumidor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnMinConsumidor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         pnlConsumidorLayout.setVerticalGroup(
             pnlConsumidorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -176,7 +310,12 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(lblTitleConsumidor)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(297, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(pnlConsumidorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblMaxConsumidor)
+                    .addComponent(btnMaxConsumidor)
+                    .addComponent(btnMinConsumidor))
+                .addContainerGap(244, Short.MAX_VALUE))
         );
 
         pnlProductor.setBackground(new java.awt.Color(51, 51, 51));
@@ -197,6 +336,27 @@ public class MainFrame extends javax.swing.JFrame {
         pnlContentProductor.setLayout(new java.awt.GridBagLayout());
         pnlScrollContentProductor.setViewportView(pnlContentProductor);
 
+        btnMaxProductor.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnMaxProductor.setText("+");
+        btnMaxProductor.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnMaxProductorMouseClicked(evt);
+            }
+        });
+
+        lblMaxProductor.setFont(new java.awt.Font("Arial Black", 1, 18)); // NOI18N
+        lblMaxProductor.setForeground(new java.awt.Color(255, 255, 255));
+        lblMaxProductor.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblMaxProductor.setText("10");
+
+        btnMinProductor.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        btnMinProductor.setText("-");
+        btnMinProductor.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnMinProductorMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlProductorLayout = new javax.swing.GroupLayout(pnlProductor);
         pnlProductor.setLayout(pnlProductorLayout);
         pnlProductorLayout.setHorizontalGroup(
@@ -204,9 +364,18 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(pnlProductorLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnlProductorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblTitleProductor, javax.swing.GroupLayout.PREFERRED_SIZE, 301, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pnlScrollContentProductor, javax.swing.GroupLayout.PREFERRED_SIZE, 301, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(18, Short.MAX_VALUE))
+                    .addGroup(pnlProductorLayout.createSequentialGroup()
+                        .addGroup(pnlProductorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblTitleProductor, javax.swing.GroupLayout.PREFERRED_SIZE, 301, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(pnlScrollContentProductor, javax.swing.GroupLayout.PREFERRED_SIZE, 301, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 8, Short.MAX_VALUE))
+                    .addGroup(pnlProductorLayout.createSequentialGroup()
+                        .addComponent(btnMaxProductor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblMaxProductor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(btnMinProductor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         pnlProductorLayout.setVerticalGroup(
             pnlProductorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -215,7 +384,12 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(lblTitleProductor)
                 .addGap(18, 18, 18)
                 .addComponent(pnlScrollContentProductor, javax.swing.GroupLayout.PREFERRED_SIZE, 199, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(286, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(pnlProductorLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblMaxProductor)
+                    .addComponent(btnMaxProductor)
+                    .addComponent(btnMinProductor))
+                .addContainerGap(233, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -228,9 +402,9 @@ public class MainFrame extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(pnlProductor, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pnlAlmacen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(pnlAlmacen, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pnlConsumidor, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(pnlConsumidor, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
                         .addGap(15, 15, 15))
                     .addComponent(pnlHeader, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -252,10 +426,73 @@ public class MainFrame extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnStartMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnStartMouseClicked
+        // TODO add your handling code here:
+        if(!_IsActive){
+            _IsActive = true;
+            for (int i = 0; i < _ListProductores.size(); i++) {
+                _ListProductores.get(i).start();
+            }
+            for (int i = 0; i < _ListConsumidor.size(); i++) {
+                _ListConsumidor.get(i).start();
+            }
+            btnStart.setText("Reiniciar");
+        }else{
+            _IsActive = false;
+            int prS =_ListProductores.size();
+            for (int i = 0; i < prS; i++) {
+                RemoveProductor();
+            }
+            int csS = _ListConsumidor.size();
+            for (int i = 0; i < csS; i++) {
+                RemoveConsumidor();
+            }
+            AddProductor();
+            AddConsumidor();
+            _Inventario.RestarMax(10);
+            lblMaxAlmacen.setText("10");
+            btnStart.setText("Iniciar");
+        }
+    }//GEN-LAST:event_btnStartMouseClicked
+
+    private void btnMaxProductorMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnMaxProductorMouseClicked
+        // TODO add your handling code here:
+        this.AddProductor();
+    }//GEN-LAST:event_btnMaxProductorMouseClicked
+
+    private void btnMaxAlmacenMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnMaxAlmacenMouseClicked
+        // TODO add your handling code here:
+        lblMaxAlmacen.setText( String.valueOf( this._Inventario.AddMax() ));
+    }//GEN-LAST:event_btnMaxAlmacenMouseClicked
+
+    private void btnMaxConsumidorMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnMaxConsumidorMouseClicked
+        // TODO add your handling code here:
+        this.AddConsumidor();
+    }//GEN-LAST:event_btnMaxConsumidorMouseClicked
+
+    private void btnMinProductorMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnMinProductorMouseClicked
+        // TODO add your handling code here:
+        this.RemoveProductor();      
+    }//GEN-LAST:event_btnMinProductorMouseClicked
+
+    private void btnMinConsumidorMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnMinConsumidorMouseClicked
+        // TODO add your handling code here:
+        this.RemoveConsumidor();
+    }//GEN-LAST:event_btnMinConsumidorMouseClicked
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnMaxAlmacen;
+    private javax.swing.JButton btnMaxConsumidor;
+    private javax.swing.JButton btnMaxProductor;
+    private javax.swing.JButton btnMinAlmacen;
+    private javax.swing.JButton btnMinConsumidor;
+    private javax.swing.JButton btnMinProductor;
     private javax.swing.JButton btnStart;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel lblMaxAlmacen;
+    private javax.swing.JLabel lblMaxConsumidor;
+    private javax.swing.JLabel lblMaxProductor;
     private javax.swing.JLabel lblTitle;
     private javax.swing.JLabel lblTitleAlmacen;
     private javax.swing.JLabel lblTitleConsumidor;
